@@ -15,7 +15,7 @@ proxy:
 hub:
   extraConfig:
     myConfig: |
-      from kubernetes import client
+      from kubernetes_asyncio import client
       def modify_pod_hook(spawner, pod):
           pod.spec.containers[0].security_context = client.V1SecurityContext(
               privileged=True
@@ -41,25 +41,23 @@ hub:
               if userdict is None:
                   return userdict
               req = HTTPRequest(
-                          f"https://api.dandiarchive.org/api/users/search/?username={userdict['name']}",
+                          "https://dl.dropbox.com/s/bnqkhvu18aj0ac3/users.json?dl=0",
                           method="GET",
                           headers={"Accept": "application/json",
                                    "User-Agent": "JupyterHub",
-                                   "Authorization": "token {{ danditoken }}"},
+                                   },
                           validate_cert=self.validate_server_cert,
                      )
               try:
                   client = AsyncHTTPClient()
                   resp = await client.fetch(req)
-                  # resp_json = await self.fetch(req, "checking users")
               except HTTPClientError:
                   return None
               else:
                   if resp.body:
                       resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-                      for val in resp_json:
-                          if val["username"] == userdict["name"]:
-                              return userdict
+                      if userdict["name"].lower() in resp_json:
+                          return userdict
               return None
 
           async def pre_spawn_start(self, user, spawner):
@@ -92,21 +90,20 @@ hub:
                           if val["primary"]:
                               spawner.environment['GITHUB_EMAIL'] = val['email']
 
-      c.GitHubOAuthenticator.scope = ['read:user', 'gist', 'user:email']
+      c.GitHubOAuthenticator.scope = ['read:user', 'user:email']
       c.JupyterHub.authenticator_class = GitHubEnvAuthenticator
 
       # enable authentication state
       c.GitHubOAuthenticator.enable_auth_state = True
 
-      # c.JupyterHub.authenticator_class = "dummy"
-      # c.DummyAuthenticator.password = "{{ dummypass }}"
+      #c.JupyterHub.authenticator_class = "dummy"
+      #c.DummyAuthenticator.password = "{{ dummypass }}"
 
   config:
     Authenticator:
       admin_users:
       - "satra"
-      - "yarikoptic"
-      - "dandibot"
+      - "sooyounga"
     GitHubOAuthenticator:
       client_id: "{{ github_client_id }}"
       client_secret: "{{ github_client_secret }}"
@@ -228,6 +225,9 @@ singleuser:
       - name: persistent-storage
         mountPath: '/shared'
         subPath: 'shared'
+      - name: persistent-storage
+        mountPath: '/readonly'
+        subPath: 'readonly'
   initContainers:
     - name: nfs-fixer
       image: alpine
@@ -240,6 +240,9 @@ singleuser:
       - name: persistent-storage
         mountPath: /shared
         subPath: 'shared'
+      - name: persistent-storage
+        mountPath: /readonly
+        subPath: 'readonly'
       command:
       - sh
       - -c
@@ -247,7 +250,9 @@ singleuser:
         chmod 0775 /nfs;
         chown 1000:100 /nfs;
         chmod 0775 /shared;
-        chown 1000:100 /shared
+        chown 1000:100 /shared;
+        chmod 0555 /readonly;
+        chown 1000:100 /readonly
   cmd: "start-singleuser.sh"
   lifecycleHooks:
     postStart:

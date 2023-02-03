@@ -75,6 +75,7 @@
             - /home/ec2-user/{{ namespace }}/nodes1.yaml
             - /home/ec2-user/{{ namespace }}/nodes2.yaml
             - /home/ec2-user/{{ namespace }}/nodes3.yaml
+            - /home/ec2-user/{{ namespace }}/nodes4.yaml
             - /home/ec2-user/{{ namespace }}/cluster-autoscaler-multi-asg.yaml
         when: autoscaler_yaml.stat.exists == True
         tags:

@@ -5,7 +5,7 @@ metadata:
   generation: 2
   labels:
     kops.k8s.io/cluster: {{ namespace }}.k8s.local
-  name: nodes-us-west-2c
+  name: nodes-us-west-2d
 spec:
   cloudLabels:
     k8s.io/cluster-autoscaler/enabled: ""
@@ -16,9 +16,9 @@ spec:
   maxSize: {{ max_node }}
   minSize: 1
   nodeLabels:
-    kops.k8s.io/instancegroup: nodes-us-west-2c
+    kops.k8s.io/instancegroup: nodes-us-west-2d
     on-demand: "true"
   role: Node
   rootVolumeSize: {{ node_volume_size }}
   subnets:
-  - us-west-2c
+  - us-west-2d

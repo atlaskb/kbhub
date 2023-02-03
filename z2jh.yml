@@ -308,6 +308,11 @@
             src: nodes3.yaml.j2
             dest: /home/ec2-user/{{ namespace }}/nodes3.yaml
 
+        - name: Create nodes file
+          template:
+            src: nodes4.yaml.j2
+            dest: /home/ec2-user/{{ namespace }}/nodes4.yaml
+
         - name: Apply nodes config
           command: kops replace -f /home/ec2-user/{{ namespace }}/nodes1.yaml
           args:
@@ -320,6 +325,11 @@
 
         - name: Apply nodes config
           command: kops replace -f /home/ec2-user/{{ namespace }}/nodes3.yaml
+          args:
+            chdir: /home/ec2-user/{{ namespace }}
+
+        - name: Apply nodes config
+          command: kops replace -f /home/ec2-user/{{ namespace }}/nodes4.yaml
           args:
             chdir: /home/ec2-user/{{ namespace }}
 
@@ -415,7 +425,7 @@
 
       - block:
         - name: Attach policy to nodes
-          command: aws iam attach-role-policy --policy-arn arn:aws:iam::278212569472:policy/ig-policy --role-name nodes.{{ namespace }}.k8s.local
+          command: aws iam attach-role-policy --policy-arn arn:aws:iam::470215396895:policy/ig-policy --role-name nodes.{{ namespace }}.k8s.local
 
         - name: Create autoscale config file
           template:
