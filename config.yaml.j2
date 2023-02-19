@@ -90,7 +90,7 @@ hub:
                           if val["primary"]:
                               spawner.environment['GITHUB_EMAIL'] = val['email']
 
-      c.GitHubOAuthenticator.scope = ['read:user', 'user:email']
+      c.GitHubOAuthenticator.scope = ['read:user', 'gist', 'user:email']
       c.JupyterHub.authenticator_class = GitHubEnvAuthenticator
 
       # enable authentication state
@@ -108,13 +108,12 @@ hub:
       client_id: "{{ github_client_id }}"
       client_secret: "{{ github_client_secret }}"
       oauth_callback_url: "{{ ingress }}/hub/oauth_callback"
-    JupyterHub:
-      admin_access: false
-      authenticator_class: github
-    OAuthenticator:
       scope:
       - read:user
+      - gist
       - user:email
+    JupyterHub:
+      authenticator_class: github
 
 scheduling:
   userScheduler:
@@ -146,7 +145,7 @@ singleuser:
     - display_name: "Tiny. Useful for many quick things"
       description: "0.5 CPU / 1 GB"
       kubespawner_override:
-        singleuser_image_spec: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}'
+        image: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}'
         image_pull_policy: Always
         cpu_limit: 2
         cpu_guarantee: 0.25
@@ -156,7 +155,7 @@ singleuser:
       description: "6 CPU / 16 GB upto 12C/32G. May take up to 15 mins to start."
       default: true
       kubespawner_override:
-        singleuser_image_spec: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}'
+        image: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}'
         image_pull_policy: Always
         cpu_limit: 12
         cpu_guarantee: 6
@@ -165,7 +164,7 @@ singleuser:
     - display_name: "Medium"
       description: "12C/32G upto 24C/64G. May take up to 15 mins to start."
       kubespawner_override:
-        singleuser_image_spec: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}'
+        image: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}'
         image_pull_policy: Always
         cpu_limit: 24
         cpu_guarantee: 12
@@ -193,15 +192,6 @@ singleuser:
           nvidia.com/gpu: "1"
         extra_pod_config:
           runtimeClassName: nvidia
-    - display_name: "Base (MATLAB)"
-      description: "6 CPU / 16 GB upto 12C/32G. May take up to 15 mins to start. This requires your own license."
-      kubespawner_override:
-        singleuser_image_spec: '{{ singleuser_image_repo }}:{{ singleuser_image_tag }}-matlab'
-        image_pull_policy: Always
-        cpu_limit: 12
-        cpu_guarantee: 6
-        mem_limit: 32G
-        mem_guarantee: 16G
   storage:
     type: none
     extraVolumes:
@@ -227,6 +217,7 @@ singleuser:
         subPath: 'shared'
       - name: persistent-storage
         mountPath: '/readonly'
+        readOnly: true
         subPath: 'readonly'
   initContainers:
     - name: nfs-fixer
@@ -251,8 +242,7 @@ singleuser:
         chown 1000:100 /nfs;
         chmod 0775 /shared;
         chown 1000:100 /shared;
-        chmod 0555 /readonly;
-        chown 1000:100 /readonly
+        chmod 0555 /readonly
   cmd: "start-singleuser.sh"
   lifecycleHooks:
     postStart:
@@ -261,10 +251,5 @@ singleuser:
           - "sh"
           - "-c"
           - >
-            gitpuller https://github.com/dandi/example-notebooks master dandi-notebooks;
-            chown -R jovyan:users dandi-notebooks;
-            datalad install https://github.com/dandi/dandisets;
-            /opt/conda/envs/allen/bin/python -m ipykernel install --user --name allen --display-name "Python (Allen SDK)";
-            /opt/conda/bin/pip install --upgrade dandi;
             git config --global user.email "${GITHUB_EMAIL}";
             git config --global user.name "${GITHUB_USER}"
