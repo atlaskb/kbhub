@@ -3,6 +3,10 @@ proxy:
   https:
     enabled: true
     type: offload
+    hosts:
+    - {{ ingress_host }}
+    #letsencrypt:
+    #  contactEmail: satra@mit.edu
   service:
     annotations:
       # Certificate ARN
@@ -12,6 +16,7 @@ proxy:
       # Which ports should use SSL
       service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
       service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "3600"
+
 hub:
   extraConfig:
     myConfig: |
@@ -140,7 +145,7 @@ singleuser:
   cpu:
     limit: 12
     guarantee: 0.5
-  startTimeout: 1200
+  startTimeout: 1800
   profileList:
     - display_name: "Tiny. Useful for many quick things"
       description: "0.5 CPU / 1 GB"
